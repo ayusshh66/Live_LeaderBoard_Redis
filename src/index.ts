@@ -69,7 +69,7 @@ app.post("/leaderboard/increment", async(req:Request, res:Response) => {
 
 })
 
-//
+// fetch the rank of player from leaderboard
 app.get("/leaderboard/rank", async(req:Request, res:Response) => {
 
     const player = req.body.player;
@@ -87,8 +87,8 @@ app.get("/leaderboard/rank", async(req:Request, res:Response) => {
     
     try {
 
-        const defaultRank = await redis.zrevrank(LEADERBOARD_KEY,player);
-        const rank = defaultRank? defaultRank+1 : 1;
+        const defaultRank = await redis.zrevrank(LEADERBOARD_KEY,player); // revrank means rank from reverse and redis starts from 0
+        const rank = defaultRank? defaultRank+1 : 1; // redis starts from 0 thats why rank +1 ;
 
         return res.status(200).json({message : `The rank of ${player} is ${rank}`})
         
@@ -98,7 +98,24 @@ app.get("/leaderboard/rank", async(req:Request, res:Response) => {
 
 })
 
+//
+app.get("/leaderboard/top/:range", async(req: Request,res: Response) => {
 
+    const paramsRange = Number(req.params.range);
+    const range = paramsRange - 1;
+
+    try {
+
+        const data = await redis.zrevrange(LEADERBOARD_KEY,0,range, "WITHSCORES");
+
+        return res.status(200).json({message : `the leader-board for top ${paramsRange} is : `, data})
+        
+    } catch (error) {
+        return res.status(500).json({error : "internal server error", message : error})
+    }
+    
+
+})
 
 app.listen(PORT, () =>{
 
