@@ -69,6 +69,35 @@ app.post("/leaderboard/increment", async(req:Request, res:Response) => {
 
 })
 
+//
+app.get("/leaderboard/rank", async(req:Request, res:Response) => {
+
+    const player = req.body.player;
+
+    const exisitingPlayer = await redis.zscore(LEADERBOARD_KEY,player);
+
+    if(exisitingPlayer == null){
+        return res.status(400).json({error : `${player} does not exist in the leaderboard`})
+    }
+
+    if(!player){
+        return res.status(400).json({error : "enter player name"})
+    }
+
+    
+    try {
+
+        const defaultRank = await redis.zrevrank(LEADERBOARD_KEY,player);
+        const rank = defaultRank? defaultRank+1 : 1;
+
+        return res.status(200).json({message : `The rank of ${player} is ${rank}`})
+        
+    } catch (error) {
+        return res.status(500).json({error : "internal server error", message : error})
+    }
+
+})
+
 
 
 app.listen(PORT, () =>{
