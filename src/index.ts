@@ -13,7 +13,33 @@ const redis = new Redis({
 
 const LEADERBOARD_KEY = "leaderboard:ayush";
 
+app.post("/leaderboard/add", async(req: Request,res :Response) => {
 
+    const {player, score} = req.body;
+
+    if(!player || !score){
+        return res.status(400).json({error : `enter player name and score`})
+    }
+
+    try {
+
+        const existingPlayer = await redis.zscore(LEADERBOARD_KEY, player);
+
+        if(existingPlayer !== null){
+            return res.status(400).json({message : "This player is already in the leaderboard"})
+        }
+
+        await redis.zadd(LEADERBOARD_KEY,score, player);
+
+        return res.status(200).json({status : "success"})
+        
+    } catch (error) {
+        return res.status(500).json({error : "internal server error"})
+    }
+
+
+
+})
 
 app.listen(PORT, () =>{
 
