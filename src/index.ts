@@ -98,7 +98,7 @@ app.get("/leaderboard/rank", async(req:Request, res:Response) => {
 
 })
 
-//
+// get all teh players in leaderboard by range from params
 app.get("/leaderboard/top/:range", async(req: Request,res: Response) => {
 
     const paramsRange = Number(req.params.range);
@@ -114,6 +114,32 @@ app.get("/leaderboard/top/:range", async(req: Request,res: Response) => {
         return res.status(500).json({error : "internal server error", message : error})
     }
     
+
+})
+
+app.delete("/leaderboard/remove", async(req: Request,res: Response) => {
+
+    const player = req.body.player;
+
+    if(!player){
+        return res.status(400).json({error : "enter player name"})
+    }
+
+    const exisitingPlayer = await redis.zscore(LEADERBOARD_KEY,player);
+
+    if(exisitingPlayer == null){
+        return res.status(400).json({error : `${player} does not exist in the leaderboard`})
+    }
+
+    try{
+
+        await redis.zrem(LEADERBOARD_KEY,player);
+
+        return res.status(200).json({message : `${player} has been removed from leaderboard`})
+
+    }catch(error){
+        return res.status(500).json({error : "internal server error", message : error})
+    }
 
 })
 
