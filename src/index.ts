@@ -117,6 +117,7 @@ app.get("/leaderboard/top/:range", async(req: Request,res: Response) => {
 
 })
 
+//remove player from leaderboard;
 app.delete("/leaderboard/remove", async(req: Request,res: Response) => {
 
     const player = req.body.player;
@@ -139,6 +140,34 @@ app.delete("/leaderboard/remove", async(req: Request,res: Response) => {
 
     }catch(error){
         return res.status(500).json({error : "internal server error", message : error})
+    }
+
+})
+
+app.post("/leaderboard/:region/score", async(req: Request<{region : string}>,res: Response) => {
+
+    const region  = req.params.region;
+    const payload = {
+        player : req.body.player,
+        score : Number(req.body.score),
+    }
+
+    const validRegion = ["asia", "us", "europe"];
+
+    if(!validRegion.includes(region.toLowerCase())){
+        return res.status(400).json({error : `Invalid region`})
+    }
+
+    const REGION_KEY = `leaderboard:region:${region.toLowerCase()}`;
+
+    await redis.zadd(REGION_KEY, payload.score, payload.player);
+
+    return res.status(200).json({message : `${payload.player} with ${payload.score} added in leader board in ${region.toLocaleLowerCase()}`})
+
+    try {
+        
+    } catch (error) {
+        return res.status(400).json({error : "internal server error", message : error})
     }
 
 })
