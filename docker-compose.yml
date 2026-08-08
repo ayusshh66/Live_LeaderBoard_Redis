@@ -1,0 +1,25 @@
+services:
+
+  redis:
+    image: redis:latest
+    container_name: redis_leaderboard
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  postgres:
+    image: postgres:latest
+    container_name: postgres_leaderboard
+    environment:
+      POSTGRES_USER: leaderboard_user
+      POSTGRES_PASSWORD: leaderboard_pass
+      POSTGRES_DB: leaderboard_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+ redis_data:
+ postgres_data:
