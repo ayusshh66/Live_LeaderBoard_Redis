@@ -13,33 +13,63 @@ const redis = new Redis({
 
 const LEADERBOARD_KEY = "leaderboard:ayush";
 
+//Adding player an score in leaderboard
 app.post("/leaderboard/add", async(req: Request,res :Response) => {
 
-    const {player, score} = req.body;
+    const payload = {
+        player : req.body.player,
+        score : Number(req.body.score)
+    }
 
-    if(!player || !score){
+    if(!payload.player || !payload.score){
         return res.status(400).json({error : `enter player name and score`})
     }
 
     try {
 
-        const existingPlayer = await redis.zscore(LEADERBOARD_KEY, player);
+        const existingPlayer = await redis.zscore(LEADERBOARD_KEY, payload.player); // posts score of a player
 
         if(existingPlayer !== null){
             return res.status(400).json({message : "This player is already in the leaderboard"})
         }
 
-        await redis.zadd(LEADERBOARD_KEY,score, player);
+        await redis.zadd(LEADERBOARD_KEY, payload.score, payload.player);
 
         return res.status(200).json({status : "success"})
         
     } catch (error) {
-        return res.status(500).json({error : "internal server error"})
+        return res.status(500).json({error : "internal server error", cause : error})
     }
 
 
 
 })
+
+// increasing the score of a player in leaderboard
+app.post("/leaderboard/increment", async(req:Request, res:Response) => {
+
+    const payload = {
+        player : req.body.player,
+        score : Number(req.body.score),
+    }
+
+    try {
+
+        if(payload.score < 0){
+            return res.status(400).json({message : "you can only increase the score of a player"})
+        }else {
+            await redis.zincrby(LEADERBOARD_KEY, payload.score, payload.player); // adds score in exisiting score and can be negetive
+
+        return res.status(200).json({message : "player score increased"})
+        }
+        
+    } catch (error) {
+        return res.status(500).json({error : "internal server error", message : error})
+    }
+
+})
+
+
 
 app.listen(PORT, () =>{
 
